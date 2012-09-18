@@ -35,10 +35,7 @@ public abstract class NodeCollectedVisitor extends NodeVisitor
 	/** The attribute is used to filter */
 	protected final String attribute;
 	
-	/** The node is collected pool */
-	protected Collection<Node> holder;
-	
-	public NodeCollectedVisitor(Collection<Node> holder, String tagName, String attribute)
+	public NodeCollectedVisitor(String tagName, String attribute)
 	{
 		if(tagName == null) 
 		{
@@ -46,7 +43,6 @@ public abstract class NodeCollectedVisitor extends NodeVisitor
 		}
 		this.tagName = tagName;
 		this.attribute = attribute;
-		this.holder = holder; 
 	}
 	
    @Override
@@ -62,10 +58,7 @@ public abstract class NodeCollectedVisitor extends NodeVisitor
    		}
    		
    		//
-   		if(validate(node))
-   		{
-   			holder.add(node);
-   		}
+   		collect(node);
    	}
    }
 
@@ -74,6 +67,6 @@ public abstract class NodeCollectedVisitor extends NodeVisitor
    {
    }
    
-   public abstract boolean validate(Node node);
+   public abstract void collect(Node node);
    
 }

@@ -101,25 +101,21 @@ public class ParsingTestCase extends Assert
 	{
 		HtmlParser parser = new HtmlParser();
 		Document doc = parser.parseNonWellForm(html);
-		LinkedList<Node> list = new LinkedList<Node>();
-		NodeCollectedVisitor visitor = new NodeCollectedVisitor(list, "a", "href")
+		final LinkedList<String> list = new LinkedList<String>();
+		NodeCollectedVisitor visitor = new NodeCollectedVisitor("a", "href")
 		{
 			@Override
-			public boolean validate(Node node)
+			public void collect(Node node)
 			{
 				String href = ((Element) node).getAttribute("href");
 				if(href.startsWith("http://www.vn-zoom.com/f171/") && href.endsWith(".html"))
 				{
-					return true;
-				}
-				else
-				{
-					return false;
+					list.add(href);
 				}
 			}
 		};
 		visitor.traverse(doc);
 		assertTrue(list.size() > 0);
-		assertEquals("http://www.vn-zoom.com/f171/i2.html", list.get(0).getAttributes().getNamedItem("href").getNodeValue());
+		assertEquals("http://www.vn-zoom.com/f171/i2.html", list.get(0));
 	}
 }
