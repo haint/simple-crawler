@@ -37,7 +37,7 @@ public class HttpClientUtilTestCase extends Assert
 	@Test
 	public void testAddCookie() throws Exception 
 	{
-		DefaultHttpClient httpclient = HttpClientFactory.getInstance();
+		DefaultHttpClient httpclient = HttpClientFactory.createNewDefaultHttpClient();
 		BasicClientCookie cookie = (BasicClientCookie)HttpClientUtil.addCookie(httpclient, "jsession", "12345");
 		cookie.setDomain("org.simple");
 		cookie.setPath("/");

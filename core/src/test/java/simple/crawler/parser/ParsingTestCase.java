@@ -17,15 +17,22 @@
  */
 package simple.crawler.parser;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.util.LinkedList;
+
+import junit.framework.Assert;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.xml.sax.SAXParseException;
 
 import simple.crawler.HttpClientFactory;
 import simple.crawler.HttpClientUtil;
-
-import junit.framework.Assert;
 
 /**
  * @author <a href="mailto:haithanh0809@gmail.com">Nguyen Thanh Hai</a>
@@ -39,7 +46,15 @@ public class ParsingTestCase extends Assert
 	@BeforeClass
 	public static void init() throws Exception
 	{
-		html = HttpClientUtil.fetch(HttpClientFactory.getInstance(), "http://www.vn-zoom.com/f171/");
+		FileInputStream fis = new FileInputStream(/*System.getProperty("test.resources")*/ "src/test/resources" + "/datum/index.html");
+		BufferedInputStream bis = new BufferedInputStream(fis);
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		byte[] buff = new byte[1024];
+		for(int l = bis.read(buff); l != -1; l = bis.read(buff))
+		{
+			baos.write(buff, 0, buff.length);
+		}
+		html = new String(baos.toByteArray(), "UTF-8");
 	}
 	
 	@Test
@@ -79,5 +94,32 @@ public class ParsingTestCase extends Assert
 		HtmlParser parser = new HtmlParser();
 		Document doc = parser.parseNonWellForm(html);
 		assertEquals("http://www.vn-zoom.com/", HtmlDOMUtil.getBaseURL(doc));
+	}
+	
+	@Test
+	public void testCollectLink() throws Exception
+	{
+		HtmlParser parser = new HtmlParser();
+		Document doc = parser.parseNonWellForm(html);
+		LinkedList<Node> list = new LinkedList<Node>();
+		NodeCollectedVisitor visitor = new NodeCollectedVisitor(list, "a", "href")
+		{
+			@Override
+			public boolean validate(Node node)
+			{
+				String href = ((Element) node).getAttribute("href");
+				if(href.startsWith("http://www.vn-zoom.com/f171/") && href.endsWith(".html"))
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		};
+		visitor.traverse(doc);
+		assertTrue(list.size() > 0);
+		assertEquals("http://www.vn-zoom.com/f171/i2.html", list.get(0).getAttributes().getNamedItem("href").getNodeValue());
 	}
 }

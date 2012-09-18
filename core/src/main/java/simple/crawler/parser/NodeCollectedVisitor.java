@@ -18,7 +18,6 @@
 package simple.crawler.parser;
 
 import java.util.Collection;
-import java.util.Iterator;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -47,18 +46,9 @@ public abstract class NodeCollectedVisitor extends NodeVisitor
 		}
 		this.tagName = tagName;
 		this.attribute = attribute;
+		this.holder = holder; 
 	}
 	
-	public String getTagName()
-	{
-		return tagName;
-	}
-	
-	public Iterator<Node> getNodeCollectedIterator()
-	{
-		return holder.iterator();
-	}
-
    @Override
    public void preTraverse(Node node)
    {

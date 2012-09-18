@@ -36,7 +36,7 @@ public abstract class NodeVisitor
 		while(child != null)
 		{
 			traverse(child);
-			child = node.getNextSibling();
+			child = child.getNextSibling();
 		}
 		
 		//
