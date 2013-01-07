@@ -31,8 +31,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXParseException;
 
-import simple.crawler.HttpClientFactory;
-import simple.crawler.HttpClientUtil;
+import simple.crawler.http.HttpClientFactory;
+import simple.crawler.http.HttpClientUtil;
 
 /**
  * @author <a href="mailto:haithanh0809@gmail.com">Nguyen Thanh Hai</a>
@@ -46,7 +46,7 @@ public class ParsingTestCase extends Assert
 	@BeforeClass
 	public static void init() throws Exception
 	{
-		FileInputStream fis = new FileInputStream(/*System.getProperty("test.resources")*/ "src/test/resources" + "/datum/index.html");
+		FileInputStream fis = new FileInputStream(/*System.getProperty("test.resources")*/ "src/test/resources" + "/datum/vnzoom.html");
 		BufferedInputStream bis = new BufferedInputStream(fis);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		byte[] buff = new byte[1024];

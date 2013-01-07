@@ -15,7 +15,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package simple.crawler;
+package simple.crawler.http;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -80,6 +80,7 @@ public class HttpClientUtil
 		for(int l = bis.read(buff); l != -1; l = bis.read(buff))
 		{
 			baos.write(buff, 0, buff.length);
+			buff = new byte[1024];
 		}
 		return new String(baos.toByteArray(), "UTF-8");
 	}

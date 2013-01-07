@@ -17,8 +17,6 @@
  */
 package simple.crawler.parser;
 
-import java.util.Collection;
-
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 

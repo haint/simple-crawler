@@ -26,6 +26,9 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.junit.Test;
 
+import simple.crawler.http.HttpClientFactory;
+import simple.crawler.http.HttpClientUtil;
+
 /**
  * @author <a href="mailto:haithanh0809@gmail.com">Nguyen Thanh Hai</a>
  * @version $Id$
