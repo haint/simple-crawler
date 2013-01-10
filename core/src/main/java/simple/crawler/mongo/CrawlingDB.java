@@ -27,6 +27,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
+import com.mongodb.WriteResult;
 
 /**
  * @author <a href="mailto:haithanh0809@gmail.com">Nguyen Thanh Hai</a>
@@ -88,6 +89,12 @@ public class CrawlingDB {
          con.remove(cursor.next(), WriteConcern.SAFE);
       }
       return insert(obj, collection);
+   }
+   
+   public void remove(CrawlingDBObject obj, Collection collection) {
+      DB db = client.getDB(dbName);
+      DBCollection con = db.getCollection(collection.toString());
+      WriteResult result = con.remove(obj, WriteConcern.SAFE);
    }
 
    public DBCursor find(Collection collection) {

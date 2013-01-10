@@ -57,6 +57,11 @@ public class RawDBObject extends CrawlingDBObject
       return getString("raw");
    }
    
+   public String getHash() 
+   {
+      return getString("hash");
+   }
+   
    @Override
    public String getUUID()
    {
