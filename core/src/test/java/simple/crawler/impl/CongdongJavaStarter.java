@@ -17,19 +17,18 @@
  */
 package simple.crawler.impl;
 
-import java.awt.Cursor;
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.xml.xpath.XPathConstants;
 
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -46,7 +45,6 @@ import simple.crawler.mongo.RawDBObject;
 import simple.crawler.parser.HtmlParser;
 import simple.crawler.parser.NodeCollectedVisitor;
 import simple.crawler.parser.XPathUtil;
-import simple.crawler.util.MD5;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
@@ -57,20 +55,24 @@ import com.mongodb.DBObject;
  * @version $Id$
  */
 public class CongdongJavaStarter extends ForumCrawler {
+
+   private final Logger LOG = LoggerFactory.getLogger(CongdongJavaStarter.class);
+
    private final String baseUrl  = "http://congdongjava.com/forum/";
 
-   private ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
+   private final PausableThreadPoolExecutor executor;
 
    private final LinkedBlockingQueue<CategoryDBObject> catQueue = new LinkedBlockingQueue<CategoryDBObject>();
 
    private final LinkedBlockingQueue<RawDBObject> rawQueue = new LinkedBlockingQueue<RawDBObject>();
-   
+
    private final LinkedBlockingQueue<PageDBObject> pageQueue = new LinkedBlockingQueue<PageDBObject>();
 
    private final CrawlingDB db;
 
-   CongdongJavaStarter(String dbName) throws Exception {
+   CongdongJavaStarter(String dbName, int numOfThreads) throws Exception {
       this.db = new CrawlingDB(dbName);
+      this.executor = new PausableThreadPoolExecutor(numOfThreads);
       if (db.count(Collection.CATEGORY) == 0) {
          initCategory();
       }
@@ -81,17 +83,17 @@ public class CongdongJavaStarter extends ForumCrawler {
             CategoryDBObject cat = new CategoryDBObject(cursor.next());
             catQueue.add(cat);
          }
-         
+
          cursor = db.find(Collection.PAGE);
          while(cursor.hasNext()) {
             PageDBObject page = new PageDBObject(cursor.next());
             pageQueue.add(page);
          }
-         
+
          cursor = db.find(Collection.RAW);
          while(cursor.hasNext()) {
             DBObject obj = cursor.next();
-            RawDBObject raw = new RawDBObject(new BasicDBObject("url", obj.get("url")).append("uuid", obj.get("uuid")));
+            RawDBObject raw = new RawDBObject(new BasicDBObject("_id", obj.get("_id")).append("url", obj.get("url")));
             rawQueue.add(raw);
          }
       }
@@ -120,13 +122,20 @@ public class CongdongJavaStarter extends ForumCrawler {
          catQueue.add(cat);
       }
    }
-
-   void stop() throws InterruptedException {
-      executor.shutdown();
-      executor.awaitTermination(60, TimeUnit.SECONDS);
+   
+   public void pause() {
+      executor.pause();
+   }
+   
+   public void resume() {
+      executor.resume();
    }
 
-   void run() throws Exception {
+   public void terminate() throws InterruptedException {
+      executor.shutdownNow();
+   }
+
+   public void run() {
       if (catQueue.size() > 0) {
          final CategoryDBObject cat = catQueue.poll();
          executor.execute(new Runnable() {
@@ -139,7 +148,7 @@ public class CongdongJavaStarter extends ForumCrawler {
             }
          });
       }
-      
+
       if(pageQueue.size() > 0) {
          final PageDBObject page = pageQueue.poll();
          executor.execute(new Runnable()
@@ -154,7 +163,7 @@ public class CongdongJavaStarter extends ForumCrawler {
             }
          });
       }
-      
+
       if (rawQueue.size() > 0) {
          final RawDBObject raw = rawQueue.poll();
          executor.execute(new Runnable() {
@@ -168,63 +177,48 @@ public class CongdongJavaStarter extends ForumCrawler {
          });
       }
    }
-   
+
    String fetch(CrawlingDBObject obj) throws Exception {
-      BasicDBObject query = new BasicDBObject("uuid", obj.getUUID());
+      BasicDBObject query = new BasicDBObject("_id", obj.getID());
       if (db.find(Collection.RAW, query).hasNext()) {
          return null;
       }
 
       String html = HttpClientUtil.fetch(HttpClientFactory.createNewDefaultHttpClient(), obj.getURL());
+      LOG.info("fetch  "  + obj.getURL());
       RawDBObject raw = new RawDBObject(obj.getURL(), html);
-      if (db.insert(raw, Collection.RAW)) {
-         System.out.println("insert RAW: " + raw.getURL());
+      if (db.save(raw, Collection.RAW)) {
          rawQueue.add(raw);
-      }
-      else
-      {
-         String hash = MD5.digest(html).toString();
-         if(!hash.equals(raw.getHash())) {
-            if(db.update(raw, Collection.RAW))
-            {
-               System.out.println("Update RAW: " + raw.getURL());
-               rawQueue.add(raw);
-            }
-         }
       }
       return html;
    }
-   
+
    void update(CategoryDBObject cat) throws Exception {
       String html = fetch(cat);
-      if (cat.getTitle() == null) {
+      if (cat.getTitle() == null && html != null) {
          HtmlParser parser = new HtmlParser();
          Document doc = parser.parseNonWellForm(html);
          Node node = (Node) XPathUtil.read(doc,
-                                           "HTML/BODY[1]/DIV[@id='headerMover']/DIV[@id='content']/DIV[1]/DIV[1]/DIV[1]/DIV[1]/DIV[3]/H1[1]",
-                                           XPathConstants.NODE);
+            "HTML/BODY[1]/DIV[@id='headerMover']/DIV[@id='content']/DIV[1]/DIV[1]/DIV[1]/DIV[1]/DIV[3]/H1[1]",
+            XPathConstants.NODE);
          if (node.getTextContent() != null) {
             cat.put("title", node.getTextContent());
-            if (db.update(cat, Collection.CATEGORY)) {
-               System.out.println("update CAT: " + cat.getURL());
-            }
+            db.update(cat, Collection.CATEGORY);
          }
       }
    }
-   
+
    void update(PageDBObject page) throws Exception {
       String html = fetch(page);
-      if(page.getTitle() == null) {
+      if(page.getTitle() == null && html != null) {
          HtmlParser parser = new HtmlParser();
          Document doc = parser.parseNonWellForm(html);
          Node node = (Node) XPathUtil.read(doc,
-                                           "HTML/BODY[1]/DIV[@id='headerMover']/DIV[@id='content']/DIV[1]/DIV[1]/DIV[1]/DIV[1]/DIV[3]/H1[1]",
-                                           XPathConstants.NODE);
+            "HTML/BODY[1]/DIV[@id='headerMover']/DIV[@id='content']/DIV[1]/DIV[1]/DIV[1]/DIV[1]/DIV[3]/H1[1]",
+            XPathConstants.NODE);
          if (node.getTextContent() != null) {
             page.put("title", node.getTextContent());
-            if (db.update(page, Collection.PAGE)) {
-               System.out.println("update PAGE: " + page.getURL());
-            }
+            db.update(page, Collection.PAGE);
          }
       }
    }
@@ -233,16 +227,16 @@ public class CongdongJavaStarter extends ForumCrawler {
       HtmlParser parser = new HtmlParser();
       if(raw.getHtml() == null)
       {
-         DBCursor cursor = db.find(Collection.RAW, new BasicDBObject("uuid", raw.getUUID()));
+         DBCursor cursor = db.find(Collection.RAW, new BasicDBObject("_id", raw.getID()));
          raw = new RawDBObject(cursor.next());
       }
       Document doc = parser.parseNonWellForm(raw.getHtml());
-      
+
       final Set<String> holder = new HashSet<String>();
       NodeCollectedVisitor visitor = new NodeCollectedVisitor("a", "href") 
       {
          private Pattern pattern = Pattern.compile("^forums/[a-zA-Z0-9-%]+\\.[0-9]+/(page-[0-9]+)?");
-         
+
          @Override
          public void collect(Node node) {
             String href = ((Element) node).getAttribute("href");
@@ -252,20 +246,19 @@ public class CongdongJavaStarter extends ForumCrawler {
          }
       };
       visitor.traverse(doc);
-      
+
       for (String url : holder) {
          CategoryDBObject cat = new CategoryDBObject(url, null);
          if (db.insert(cat, Collection.CATEGORY)) {
-            System.out.println("insert CAT: " + url);
             catQueue.add(cat);
          }
       }
-      
+
       holder.clear();
       visitor = new NodeCollectedVisitor("a", "href")
       {
          private Pattern pattern = Pattern.compile("^threads/[a-zA-Z0-9-%]+\\.[0-9]+/(page-[0-9]+)?");
-         
+
          @Override
          public void collect(Node node)
          {
@@ -276,30 +269,39 @@ public class CongdongJavaStarter extends ForumCrawler {
          }
       };
       visitor.traverse(doc);
-      
+
       for(String url : holder) {
          PageDBObject page = new PageDBObject(url, null, new CategoryDBObject(raw.getURL(), null));
          if(db.insert(page, Collection.PAGE)) {
-            System.out.println("Insert PAGE: " + url);
             pageQueue.add(page);
          }
       }
+
+      raw.append("extracted", true);
+      db.update(raw, Collection.RAW);
    }
 
    public static void main(String[] args) throws Exception {
-      CongdongJavaStarter starter = new CongdongJavaStarter("congdongjava");
-      while(true)
-      {
-         starter.run();
-      }
-      /*CrawlingDB db = new CrawlingDB("test");
-      DBCursor cursor = db.find(Collection.CATEGORY);
-      while(cursor.hasNext()) {
-         CategoryDBObject cat = new CategoryDBObject(cursor.next());
-         if(cat.getURL().indexOf("/forum/threads/") != -1)
-         {
-            db.remove(cat, Collection.CATEGORY);
+      final CongdongJavaStarter starter = new CongdongJavaStarter("test", 2);
+      Thread thread = new Thread("congdongjava") {
+         public void run() {
+            while(true) {
+               starter.run();
+               File file = new File("src/test/resources/pause");
+               if(file.exists())
+               {
+                  starter.pause();
+                  file.delete();
+               }
+               file = new File("src/test/resources/resume");
+               if(file.exists())
+               {
+                  starter.resume();
+                  file.delete();
+               }
+            }
          }
-      }*/
+      };
+      thread.start();
    }
 }

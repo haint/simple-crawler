@@ -35,21 +35,23 @@ public class RawDBObject extends CrawlingDBObject
       super(null);
       HttpURL httpUrl = new HttpURL(url);
       UriID uri = new UriID(httpUrl);
-      put("uuid", uri.toString());
+      put("_id", uri.toString());
       put("url", url);
       put("raw", html);
       put("hash", MD5.digest(html).toString());
       put("hostname", httpUrl.getHost());
+      put("extracted", false);
    }
    
    public RawDBObject(DBObject obj)
    {
       super(obj);
-      put("uuid", obj.get("uuid"));
+      put("_id", obj.get("_id"));
       put("url", obj.get("url"));
       put("raw", obj.get("raw"));
       put("hash", obj.get("hash"));
       put("hostname", obj.get("hostname"));
+      put("extracted", obj.get("extracted") == null ? false : obj.get("extracted"));
    }
    
    public String getHtml()
@@ -62,10 +64,14 @@ public class RawDBObject extends CrawlingDBObject
       return getString("hash");
    }
    
+   public boolean isExtracted() {
+      return getBoolean("extracted");
+   }
+   
    @Override
-   public String getUUID()
+   public String getID()
    {
-      return getString("uuid");
+      return getString("_id");
    }
 
    @Override

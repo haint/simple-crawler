@@ -34,7 +34,7 @@ public class CategoryDBObject extends CrawlingDBObject
       super(null);
       HttpURL httpUrl = new HttpURL(url);
       UriID uri = new UriID(httpUrl);
-      put("uuid", uri.toString());
+      put("_id", uri.toString());
       put("url", url);
       put("title", title);
       put("hostname", httpUrl.getHost());
@@ -43,7 +43,7 @@ public class CategoryDBObject extends CrawlingDBObject
    public CategoryDBObject(DBObject obj)
    {
       super(obj);
-      put("uuid", obj.get("uuid"));
+      put("_id", obj.get("_id"));
       put("url", obj.get("url"));
       put("title", obj.get("title"));
       put("hostname", obj.get("hostname"));
@@ -60,9 +60,9 @@ public class CategoryDBObject extends CrawlingDBObject
    }
 
    @Override
-   public String getUUID()
+   public String getID()
    {
-      return getString("uuid");
+      return getString("_id");
    }
 
    @Override

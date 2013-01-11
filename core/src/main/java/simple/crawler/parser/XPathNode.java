@@ -54,7 +54,7 @@ public class XPathNode
       return node;
    }
    
-   private String normalize(String text)
+   public static String normalize(String text)
    {
       if (text == null)
          return null;

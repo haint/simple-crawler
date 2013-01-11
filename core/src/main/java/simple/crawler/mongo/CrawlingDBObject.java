@@ -31,7 +31,7 @@ public abstract class CrawlingDBObject extends BasicDBObject
    {
       
    }
-   public abstract String getUUID();
+   public abstract String getID();
    
    public abstract String getURL();
 }

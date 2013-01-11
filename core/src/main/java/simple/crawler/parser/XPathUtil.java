@@ -76,7 +76,7 @@ public final class XPathUtil
       // declarations
       Node parent = null;
       Stack<Node> hierarchy = new Stack<Node>();
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
 
       // push element on stack
       hierarchy.push(node);

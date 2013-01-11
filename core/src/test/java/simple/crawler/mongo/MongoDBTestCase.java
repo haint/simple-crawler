@@ -56,7 +56,7 @@ public class MongoDBTestCase extends Assert
       c2 = new CategoryDBObject("http://localhost/cat1", "Category one update");
       db.update(c2, Collection.CATEGORY);
       
-      DBCursor cursor = db.find(Collection.CATEGORY, new BasicDBObject("uri", c2.getUUID()));
+      DBCursor cursor = db.find(Collection.CATEGORY, new BasicDBObject("_id", c2.getID()));
       CategoryDBObject c3 = new CategoryDBObject(cursor.next());
       assertEquals("Category one update", c3.getTitle());
       assertFalse(cursor.hasNext());

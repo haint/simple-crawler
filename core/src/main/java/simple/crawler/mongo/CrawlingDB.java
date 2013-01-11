@@ -19,12 +19,15 @@ package simple.crawler.mongo;
 
 import java.net.UnknownHostException;
 
+import org.slf4j.LoggerFactory;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteResult;
@@ -34,7 +37,10 @@ import com.mongodb.WriteResult;
  * @version $Id$
  */
 public class CrawlingDB {
-   private final String      dbName;
+   
+   private final org.slf4j.Logger LOG = LoggerFactory.getLogger(CrawlingDB.class);
+   
+   private final String dbName;
 
    private final MongoClient client;
 
@@ -71,30 +77,61 @@ public class CrawlingDB {
    public boolean insert(CrawlingDBObject obj, Collection collection) {
       DB db = client.getDB(dbName);
       DBCollection con = db.getCollection(collection.toString());
-      BasicDBObject query = new BasicDBObject("uuid", obj.getUUID());
-      DBCursor cursor = con.find(query);
-      if (!cursor.hasNext()) {
-         con.insert(obj, WriteConcern.SAFE);
+      try 
+      {
+         WriteResult result = con.insert(obj);
+         if(result.getError() == null)
+         {
+            return true;
+         }
+         else
+         {
+            LOG.error(result.getError());
+            return false;
+         }
+      }
+      catch(MongoException.DuplicateKey e)
+      {
+         LOG.debug(e.getMessage());
+         return false;
+      }
+   }
+   
+   public boolean save(CrawlingDBObject obj, Collection collection) {
+      DB db = client.getDB(dbName);
+      DBCollection con = db.getCollection(collection.toString());
+      WriteResult result = con.save(obj, WriteConcern.JOURNALED);
+      if(result.getError() == null)
+      {
          return true;
       }
-      return false;
+      else
+      {
+         LOG.error(result.getError());
+         return false;
+      }
    }
 
    public boolean update(CrawlingDBObject obj, Collection collection) {
       DB db = client.getDB(dbName);
       DBCollection con = db.getCollection(collection.toString());
-      BasicDBObject query = new BasicDBObject("uuid", obj.getUUID());
-      DBCursor cursor = con.find(query);
-      if (cursor.hasNext()) {
-         con.remove(cursor.next(), WriteConcern.SAFE);
+      BasicDBObject query = new BasicDBObject("_id", obj.getID());
+      WriteResult result = con.update(query, obj);
+      if(result.getError() == null)
+      {
+         return true;
       }
-      return insert(obj, collection);
+      else
+      {
+         LOG.error(result.getError());
+         return false;
+      }
    }
    
    public void remove(CrawlingDBObject obj, Collection collection) {
       DB db = client.getDB(dbName);
       DBCollection con = db.getCollection(collection.toString());
-      WriteResult result = con.remove(obj, WriteConcern.SAFE);
+      con.remove(obj, WriteConcern.SAFE);
    }
 
    public DBCursor find(Collection collection) {

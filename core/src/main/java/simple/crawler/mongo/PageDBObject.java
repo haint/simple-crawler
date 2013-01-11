@@ -34,7 +34,7 @@ public class PageDBObject extends CrawlingDBObject
    {
       super(null);
       UriID uri = new UriID(new HttpURL(url));
-      put("uuid", uri.toString());
+      put("_id", uri.toString());
       put("url", url);
       put("title", title);
       put("category", category);
@@ -43,7 +43,7 @@ public class PageDBObject extends CrawlingDBObject
    public PageDBObject(DBObject obj)
    {
       super(obj);
-      put("uuid", obj.get("uuid"));
+      put("_id", obj.get("_id"));
       put("url", obj.get("url"));
       put("title", obj.get("tite"));
       put("category", obj.get("category"));
@@ -60,9 +60,9 @@ public class PageDBObject extends CrawlingDBObject
    }
    
    @Override
-   public String getUUID()
+   public String getID()
    {
-      return getString("uuid");
+      return getString("_id");
    }
 
    @Override
