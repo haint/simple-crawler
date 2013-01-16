@@ -277,7 +277,7 @@ public class CongdongJavaStarter extends ForumCrawler {
          }
       }
 
-      raw.append("extracted", true);
+      raw.append("analyzed", true);
       db.update(raw, Collection.RAW);
    }
 

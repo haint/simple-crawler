@@ -40,6 +40,7 @@ public class RawDBObject extends CrawlingDBObject
       put("raw", html);
       put("hash", MD5.digest(html).toString());
       put("hostname", httpUrl.getHost());
+      put("analyzed", false);
       put("extracted", false);
    }
    
@@ -51,6 +52,7 @@ public class RawDBObject extends CrawlingDBObject
       put("raw", obj.get("raw"));
       put("hash", obj.get("hash"));
       put("hostname", obj.get("hostname"));
+      put("analyzed", obj.get("analyzed") == null ? false : obj.get("analyzed"));
       put("extracted", obj.get("extracted") == null ? false : obj.get("extracted"));
    }
    
@@ -66,6 +68,10 @@ public class RawDBObject extends CrawlingDBObject
    
    public boolean isExtracted() {
       return getBoolean("extracted");
+   }
+   
+   public boolean isAnalyzed() {
+      return getBoolean("analyzed");
    }
    
    @Override
