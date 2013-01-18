@@ -80,4 +80,27 @@ public class MongoDBTestCase extends Assert
       assertEquals("Category Two", p2.getCategory().getTitle());
       assertFalse(cursor.hasNext());
    }
+   
+   @Test
+   public void testUpdate() throws Exception
+   {
+      CrawlingDB db = new CrawlingDB("test");
+      assertEquals(0, db.count(Collection.CATEGORY));
+      CategoryDBObject cat = new CategoryDBObject("http://localhost", null);
+      db.update(cat, Collection.CATEGORY);
+      assertEquals(0, db.count(Collection.CATEGORY));
+   }
+   
+   @Test
+   public void testSave() throws Exception
+   {
+      CrawlingDB db = new CrawlingDB("test");
+      assertEquals(0, db.count(Collection.CATEGORY));
+      CategoryDBObject cat = new CategoryDBObject("http://localhost", null);
+      db.save(cat, Collection.CATEGORY);
+      assertEquals(1, db.count(Collection.CATEGORY));
+      cat = new CategoryDBObject("http://localhost", "title");
+      db.save(cat, Collection.CATEGORY);
+      assertEquals(1, db.count(Collection.CATEGORY));
+   }
 }

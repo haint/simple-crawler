@@ -17,12 +17,33 @@
  */
 package simple.crawler;
 
+import java.util.concurrent.TimeUnit;
+
+import simple.crawler.mongo.CrawlingDBObject;
+import simple.crawler.mongo.RawDBObject;
+
 /**
  * @author <a href="mailto:haithanh0809@gmail.com">Nguyen Thanh Hai</a>
  * @version $Id$
  *
  */
-public abstract class ForumCrawler
+public interface ICrawler
 {
-
+   void init();
+   
+   void schedule(long initialDelay, long delay, TimeUnit unit) throws Exception;
+   
+   String fetch(CrawlingDBObject obj) throws Exception;
+   
+   void update(CrawlingDBObject obj) throws Exception;
+   
+   void analyze(RawDBObject raw) throws Exception;
+   
+   void start();
+   
+   void terminate() throws InterruptedException;
+   
+   void pause();
+   
+   void resume();
 }

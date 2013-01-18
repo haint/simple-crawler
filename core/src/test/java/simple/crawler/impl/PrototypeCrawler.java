@@ -33,7 +33,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
-import simple.crawler.ForumCrawler;
 import simple.crawler.http.HttpClientFactory;
 import simple.crawler.http.HttpClientUtil;
 import simple.crawler.mongo.CategoryDBObject;
@@ -54,9 +53,9 @@ import com.mongodb.DBObject;
  * @author <a href="mailto:haithanh0809@gmail.com">Nguyen Thanh Hai</a>
  * @version $Id$
  */
-public class CongdongJavaStarter extends ForumCrawler {
+public class PrototypeCrawler  {
 
-   private final Logger LOG = LoggerFactory.getLogger(CongdongJavaStarter.class);
+   private final Logger LOG = LoggerFactory.getLogger(PrototypeCrawler.class);
 
    private final String baseUrl  = "http://congdongjava.com/forum/";
 
@@ -70,7 +69,7 @@ public class CongdongJavaStarter extends ForumCrawler {
 
    private final CrawlingDB db;
 
-   CongdongJavaStarter(String dbName, int numOfThreads) throws Exception {
+   PrototypeCrawler(String dbName, int numOfThreads) throws Exception {
       this.db = new CrawlingDB(dbName);
       this.executor = new PausableThreadPoolExecutor(numOfThreads);
       if (db.count(Collection.CATEGORY) == 0) {
@@ -169,7 +168,7 @@ public class CongdongJavaStarter extends ForumCrawler {
          executor.execute(new Runnable() {
             public void run() {
                try {
-                  extract(raw);
+                  analyze(raw);
                } catch (Exception e) {
                   throw new RuntimeException(e);
                }
@@ -223,7 +222,7 @@ public class CongdongJavaStarter extends ForumCrawler {
       }
    }
 
-   void extract(RawDBObject raw) throws Exception {
+   void analyze(RawDBObject raw) throws Exception {
       HtmlParser parser = new HtmlParser();
       if(raw.getHtml() == null)
       {
@@ -282,7 +281,7 @@ public class CongdongJavaStarter extends ForumCrawler {
    }
 
    public static void main(String[] args) throws Exception {
-      final CongdongJavaStarter starter = new CongdongJavaStarter("test", 2);
+      final PrototypeCrawler starter = new PrototypeCrawler("test", 2);
       Thread thread = new Thread("congdongjava") {
          public void run() {
             while(true) {

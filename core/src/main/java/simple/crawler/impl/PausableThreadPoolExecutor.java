@@ -24,33 +24,34 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * @author <a href="mailto:haithanh0809@gmail.com">Nguyen Thanh Hai</a>
  * @version $Id$
- *
+ * 
  */
 public class PausableThreadPoolExecutor extends ScheduledThreadPoolExecutor
 {
    private boolean isPaused;
-   
+
    private ReentrantLock pauseLock = new ReentrantLock();
-   
+
    private Condition unpaused = pauseLock.newCondition();
-   
+
    public PausableThreadPoolExecutor(int corePoolSize)
    {
       super(corePoolSize);
    }
-   
+
    @Override
-   protected void beforeExecute(Thread t, Runnable r) {
+   protected void beforeExecute(Thread t, Runnable r)
+   {
       super.beforeExecute(t, r);
       pauseLock.lock();
-      try 
+      try
       {
-         while(isPaused)
+         while (isPaused)
          {
             unpaused.await();
          }
-      } 
-      catch(InterruptedException e) 
+      }
+      catch (InterruptedException e)
       {
          t.interrupt();
       }
@@ -59,22 +60,30 @@ public class PausableThreadPoolExecutor extends ScheduledThreadPoolExecutor
          pauseLock.unlock();
       }
    }
-   
-   public void pause() {
+
+   public void pause()
+   {
       pauseLock.lock();
-      try {
+      try
+      {
          isPaused = true;
-      } finally {
+      }
+      finally
+      {
          pauseLock.unlock();
       }
    }
-   
-   public void resume() {
+
+   public void resume()
+   {
       pauseLock.lock();
-      try {
+      try
+      {
          isPaused = false;
          unpaused.signalAll();
-      } finally {
+      }
+      finally
+      {
          pauseLock.unlock();
       }
    }
