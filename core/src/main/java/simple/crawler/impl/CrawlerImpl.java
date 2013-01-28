@@ -59,7 +59,6 @@ public class CrawlerImpl implements ICrawler
 {
    private final Logger LOG = LoggerFactory.getLogger(this.getClass());
    
-   /** . */
    private final AtomicInteger counter = new AtomicInteger();
 
    /** The category queue. */
@@ -321,6 +320,7 @@ public class CrawlerImpl implements ICrawler
                try
                {
                   update(cat);
+                  System.out.println(counter.incrementAndGet() + "/" + db.count(Collection.CATEGORY));
                }
                catch (Exception e)
                {
