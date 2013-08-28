@@ -297,15 +297,15 @@ public class CrawlerImpl implements ICrawler
    
    public void start() 
    {
-      new Thread() {
-         public void run()
-         {
+//      new Thread() {
+//         public void run()
+//         {
             while(true)
             {
                CrawlerImpl.this.run();
             }
-         }
-      }.start();
+//         }
+//      }.start();
    }
 
    private void run()
@@ -321,6 +321,7 @@ public class CrawlerImpl implements ICrawler
                {
                   update(cat);
                   System.out.println(counter.incrementAndGet() + "/" + db.count(Collection.CATEGORY));
+                  checkToTerminate();
                }
                catch (Exception e)
                {
@@ -340,6 +341,7 @@ public class CrawlerImpl implements ICrawler
                try
                {
                   update(page);
+                  checkToTerminate();
                }
                catch (Exception e)
                {
@@ -359,6 +361,7 @@ public class CrawlerImpl implements ICrawler
                try
                {
                   analyze(raw);
+                  checkToTerminate();
                }
                catch (Exception e)
                {
@@ -367,6 +370,27 @@ public class CrawlerImpl implements ICrawler
             }
          });
       }
+      
+//      if (catQueue.size() == 0 && pageQueue.size() == 0 && rawQueue.size() == 0) 
+//      {
+//         try {
+//            this.terminate();
+//         } catch (InterruptedException e) {
+//            e.printStackTrace();
+//         }
+//      }
+   }
+   
+   private void checkToTerminate() {
+      if (catQueue.size() == 0 && pageQueue.size() == 0 && rawQueue.size() == 0) 
+       {
+         System.out.println("...............");
+//          try {
+//             this.terminate();
+//          } catch (InterruptedException e) {
+//             e.printStackTrace();
+//          }
+       }
    }
 
    public void terminate() throws InterruptedException

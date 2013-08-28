@@ -41,7 +41,7 @@ public class PrototypeScheduler
          "^threads/[a-zA-Z0-9-%]+\\.[0-9]+/(page-[0-9]+)?", 
          true);
       CrawlerImpl crawler = new CrawlerImpl(config, 10, new ServerAddress("localhost"), new MongoClientOptions.Builder().build());
+      crawler.schedule(1, 60 * 60, TimeUnit.SECONDS);
       crawler.start();
-      crawler.schedule(10, 60 * 60, TimeUnit.SECONDS);
    }
 }
